@@ -182,7 +182,7 @@ const probot = new Probot({
 probot.load(bot);
 
 // Express middleware
-app.use(createNodeMiddleware(bot, { probot }));
+app.use(createNodeMiddleware(bot));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
