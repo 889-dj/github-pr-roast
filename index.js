@@ -1,5 +1,11 @@
 // PR Roast Bot - A GitHub App that gives witty, constructive feedback
 // Run with: node server.js
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
+
+process.on("unhandledRejection", (err) => {
+  console.error("Unhandled Rejection:", err);
+});
 
 const express = require("express");
 const { createNodeMiddleware, Probot } = require("probot");
@@ -197,21 +203,24 @@ app.get("/", (req, res) => {
 // Setup Probot with proper middleware
 const probot = new Probot({
   appId: process.env.APP_ID,
-  privateKey: process.env.PRIVATE_KEY,
+  privateKey: process.env.PRIVATE_KEY.replace(/\\n/g, "\n"),
   secret: process.env.WEBHOOK_SECRET,
 });
 
 // Load bot and setup middleware
 probot.load(bot).then(() => {
   // Add webhook endpoint
-  app.post("/api/github/webhooks", async (req, res) => {
-    await probot.webhooks.receive({
+app.post("/api/github/webhooks", (req, res) => {
+  res.sendStatus(200); // ACK immediately to avoid 502
+
+  probot.webhooks
+    .receive({
       id: req.headers["x-github-delivery"],
       name: req.headers["x-github-event"],
       payload: req.body,
-    });
-    res.sendStatus(200);
-  });
+    })
+    .catch(console.error);
+});
 
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
